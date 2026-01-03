@@ -3,11 +3,15 @@ import datetime
 import json
 import os
 
-# --- DATA HANDLING ---
+# --- DATA HANDLING (Pure Python) ---
 DATA_FILE = "habits.json"
 
 def load_data():
-    (DATA_FILE)
+    if os.path.exists(DATA_FILE):
+        with open(DATA_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
 def save_data(data):
     with open(DATA_FILE, "w") as f:
         json.dump(data, f)
@@ -17,56 +21,65 @@ st.set_page_config(page_title="Life Optimizer", layout="centered")
 st.title("🚀 Life Optimizer")
 
 data = load_data()
-today = str(datetime.date.today())
+today_date = datetime.date.today()
+today_str = str(today_date)
 
 # --- SIDEBAR: LOG HABITS ---
 with st.sidebar:
-    st.header("Log Activity")
-    new_habit = st.text_input("Add new habit (e.g., Coding, Gym)")
+    st.header("Settings")
+    new_habit = st.text_input("New Habit Name")
     if st.button("Add Habit"):
         if new_habit and new_habit not in data:
             data[new_habit] = []
             save_data(data)
             st.rerun()
+    
+    if st.button("Clear All Data", type="primary"):
+        save_data({})
+        st.rerun()
 
-# --- MAIN INTERFACE ---
-st.subheader("Today's Progress")
-cols = st.columns(len(data) if data else 1)
-
-for i, (habit, dates) in enumerate(data.items()):
-    is_done = today in dates
-    if cols[i % 3].checkbox(habit, value=is_done, key=habit):
-        if today not in dates:
-            data[habit].append(today)
+# --- MAIN INTERFACE: CHECKLIST ---
+st.subheader("Daily Checklist")
+if not data:
+    st.info("Use the sidebar to add your first habit!")
+else:
+    for habit in list(data.keys()):
+        is_done = today_str in data[habit]
+        # Checkbox to toggle habit
+        checked = st.checkbox(f"Did you {habit} today?", value=is_done, key=habit)
+        
+        if checked and not is_done:
+            data[habit].append(today_str)
             save_data(data)
             st.rerun()
-    else:
-        if today in dates:
-            data[habit].remove(today)
+        elif not checked and is_done:
+            data[habit].remove(today_str)
             save_data(data)
             st.rerun()
 
-# --- VISUALIZATION (THE HEATMAP) ---
+# --- VISUALIZATION: EMOJI GRID ---
 st.divider()
-st.subheader("Consistency Heatmap (Last 30 Days)")
+st.subheader("Last 7 Days Activity")
 
 if data:
-    # Create a date range for the last 30 days
-    date_range = [str(datetime.date.today() - datetime.timedelta(days=x)) for x in range(30)]
-    df_map = pd.DataFrame(index=data.keys(), columns=date_range)
-
-    for habit in data.keys():
-        for d in date_range:
-            df_map.loc[habit, d] = 1 if d in data[habit] else 0
-
-    # Plotting
-    fig, ax = plt.subplots(figsize=(10, 3))
-    sns.heatmap(df_map.astype(float), cmap="Greens", cbar=False, linewidths=1, linecolor="#f0f2f6", ax=ax)
-    plt.xticks(rotation=45)
-    st.pyplot(fig)
+    for habit, dates in data.items():
+        st.write(f"**{habit}**")
+        cols = st.columns(7)
+        for i in range(7):
+            # Calculate date for the last 7 days (Right to Left)
+            day = today_date - datetime.timedelta(days=(6 - i))
+            day_str = str(day)
+            
+            # Label for the day (e.g., "Mon")
+            day_label = day.strftime("%a")
+            
+            with cols[i]:
+                if day_str in dates:
+                    st.markdown(f"🟩\n\n{day_label}")
+                else:
+                    st.markdown(f"⬜\n\n{day_label}")
 else:
-    st.info("Add a habit in the sidebar to start tracking!")
-
+    st.write("No data to display yet.")
 
 # --- FOOTER ---
 st.markdown("""
@@ -88,5 +101,3 @@ st.markdown("""
         <p>made by <b>Al Hadi</b></p>
     </div>
     """, unsafe_allow_html=True)
-
-
