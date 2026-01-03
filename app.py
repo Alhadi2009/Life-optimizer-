@@ -1,9 +1,7 @@
 import streamlit as st
-import pandas as pd
 import datetime
 import json
 import os
-import seaborn as sns
 import matplotlib.pyplot as plt
 
 # --- DATA HANDLING ---
@@ -91,3 +89,4 @@ st.markdown("""
         <p>made by <b>Al Hadi</b></p>
     </div>
     """, unsafe_allow_html=True)
+
