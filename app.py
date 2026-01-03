@@ -2,7 +2,6 @@ import streamlit as st
 import datetime
 import json
 import os
-import matplotlib.pyplot as plt
 
 # --- DATA HANDLING ---
 DATA_FILE = "habits.json"
@@ -89,4 +88,5 @@ st.markdown("""
         <p>made by <b>Al Hadi</b></p>
     </div>
     """, unsafe_allow_html=True)
+
 
